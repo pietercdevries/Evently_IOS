@@ -7,17 +7,26 @@
 //
 
 import UIKit
+import AWSS3
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        initializeS3()
         return true
     }
 
+    // s3
+    func initializeS3() {
+       let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USWest2,
+           identityPoolId:"us-west-2:adb54b67-384e-4b6f-acc4-0d95c8f31900")
+        let configuration = AWSServiceConfiguration(region:.USWest2, credentialsProvider:credentialsProvider)
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
+    }
+    
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {

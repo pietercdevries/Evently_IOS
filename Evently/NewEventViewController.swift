@@ -56,6 +56,23 @@ class NewEventViewController: UIViewController {
         EventDescription.addGestureRecognizer(tap)
     }
     
+    @IBAction func save(){
+        guard let image = EventImage.image else { return }
+        AWSS3ManagerEventImages.shared.uploadImage(image: image, imageName: "event2", progress: {[weak self] ( uploadProgress) in
+            
+            guard self != nil else { return }
+            
+        }) {[weak self] (uploadedFileUrl, error) in
+            
+            guard self != nil else { return }
+            if (uploadedFileUrl as? String) != nil { 
+                print("success")
+            } else {
+                print("\(String(describing: error?.localizedDescription))")
+            }
+        }
+    }
+    
     @objc func editDescription(sender:UITapGestureRecognizer) {
         let storyBoard: UIStoryboard = UIStoryboard(name: "NewEvent", bundle: nil)
         let newViewController = storyBoard.instantiateViewController(withIdentifier: "EditDescriptionViewController") as! EditDescriptionViewController
