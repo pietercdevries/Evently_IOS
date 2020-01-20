@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15702" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15704"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--FriendProfileViewController-->
+        <scene sceneID="3qe-Bf-3NT">
+            <objects>
+                <viewControllerPlaceholder storyboardName="FriendProfile" referencedIdentifier="FriendProfileViewController" id="TRE-IS-c1G" sceneMemberID="viewController">
+                    <navigationItem key="navigationItem" id="1Xl-4k-vV7"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="zJX-Ni-chb" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5303" y="1454"/>
+        </scene>
+        <!--ProfileViewController-->
+        <scene sceneID="yka-GT-fZt">
+            <objects>
+                <viewControllerPlaceholder storyboardName="Profile" referencedIdentifier="ProfileViewController" id="WKL-OZ-cQY" sceneMemberID="viewController">
+                    <navigationItem key="navigationItem" id="Hiq-fb-zD6"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="V6T-vv-VDS" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5304" y="1377"/>
+        </scene>
+        <!--Evently-->
+        <scene sceneID="8vq-04-1Sl">
+            <objects>
+                <tableViewController storyboardIdentifier="FriendTableViewController" id="7X4-vu-Kp5" customClass="FriendTableViewController" customModule="Evently" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="105" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="aR2-bS-sby">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="808"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="sectionIndexColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="sectionIndexBackgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <prototypes>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="FriendsCell" rowHeight="105" id="sWN-LF-K3N" customClass="FriendTableViewCell" customModule="Evently" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="28" width="414" height="105"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="sWN-LF-K3N" id="vdT-oo-KPD">
+                                    <rect key="frame" x="0.0" y="0.0" width="414" height="105"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <view userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="egJ-0f-XHq">
+                                            <rect key="frame" x="46" y="11" width="348" height="82"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Pieter de Vries" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IwB-H7-nCZ">
+                                                    <rect key="frame" x="52" y="8" width="220" height="66"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="220" id="Vcw-HE-QIc"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
+                                                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="profile" translatesAutoresizingMaskIntoConstraints="NO" id="fI3-KE-dfN">
+                                                    <rect key="frame" x="-28" y="9" width="67" height="64"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="67" id="M6x-Mw-Bqv"/>
+                                                        <constraint firstAttribute="height" constant="64" id="rPS-O5-zsi"/>
+                                                    </constraints>
+                                                    <userDefinedRuntimeAttributes>
+                                                        <userDefinedRuntimeAttribute type="string" keyPath="layer.cornerRadius" value="10"/>
+                                                    </userDefinedRuntimeAttributes>
+                                                </imageView>
+                                                <button opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wi1-iT-YpC">
+                                                    <rect key="frame" x="291" y="24" width="40" height="34"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="40" id="qsv-8l-qiM"/>
+                                                    </constraints>
+                                                    <state key="normal" title="View"/>
+                                                </button>
+                                            </subviews>
+                                            <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            <constraints>
+                                                <constraint firstAttribute="bottom" secondItem="fI3-KE-dfN" secondAttribute="bottom" constant="9" id="7f8-tE-jT6"/>
+                                                <constraint firstItem="fI3-KE-dfN" firstAttribute="leading" secondItem="egJ-0f-XHq" secondAttribute="leading" constant="-28" id="CuT-Tl-Nn6"/>
+                                                <constraint firstAttribute="bottom" secondItem="IwB-H7-nCZ" secondAttribute="bottom" constant="8" id="JFL-xo-Trc"/>
+                                                <constraint firstItem="wi1-iT-YpC" firstAttribute="top" secondItem="egJ-0f-XHq" secondAttribute="top" constant="24" id="SVW-o1-Pdj"/>
+                                                <constraint firstItem="fI3-KE-dfN" firstAttribute="top" secondItem="egJ-0f-XHq" secondAttribute="top" constant="9" id="TuB-X2-J9t"/>
+                                                <constraint firstAttribute="height" constant="82" id="dfg-6T-Hya"/>
+                                                <constraint firstItem="IwB-H7-nCZ" firstAttribute="leading" secondItem="fI3-KE-dfN" secondAttribute="trailing" constant="13" id="gZJ-s4-m0T"/>
+                                                <constraint firstItem="wi1-iT-YpC" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="IwB-H7-nCZ" secondAttribute="trailing" constant="8" symbolic="YES" id="oG4-6R-Uha"/>
+                                                <constraint firstItem="IwB-H7-nCZ" firstAttribute="top" secondItem="egJ-0f-XHq" secondAttribute="top" constant="8" id="sUb-Ku-9xj"/>
+                                                <constraint firstAttribute="bottom" secondItem="wi1-iT-YpC" secondAttribute="bottom" constant="24" id="tlk-1g-Ljj"/>
+                                                <constraint firstAttribute="trailing" secondItem="wi1-iT-YpC" secondAttribute="trailing" constant="17" id="zSy-rK-aK2"/>
+                                            </constraints>
+                                            <userDefinedRuntimeAttributes>
+                                                <userDefinedRuntimeAttribute type="string" keyPath="layer.cornerRadius" value="10"/>
+                                            </userDefinedRuntimeAttributes>
+                                        </view>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="egJ-0f-XHq" firstAttribute="top" secondItem="vdT-oo-KPD" secondAttribute="topMargin" id="2Lg-4Z-W2d"/>
+                                        <constraint firstAttribute="bottomMargin" secondItem="egJ-0f-XHq" secondAttribute="bottom" constant="1" id="Hnu-ig-QM1"/>
+                                        <constraint firstItem="egJ-0f-XHq" firstAttribute="leading" secondItem="vdT-oo-KPD" secondAttribute="leadingMargin" constant="26" id="cYh-8b-vxS"/>
+                                        <constraint firstItem="egJ-0f-XHq" firstAttribute="trailing" secondItem="vdT-oo-KPD" secondAttribute="trailingMargin" id="nA6-j9-C1g"/>
+                                    </constraints>
+                                </tableViewCellContentView>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <outlet property="friendName" destination="IwB-H7-nCZ" id="ohO-Tz-3cB"/>
+                                    <outlet property="friendProfileImage" destination="fI3-KE-dfN" id="BTE-WZ-2HZ"/>
+                                    <segue destination="TRE-IS-c1G" kind="show" id="bpO-Nd-i2y"/>
+                                </connections>
+                            </tableViewCell>
+                        </prototypes>
+                        <userDefinedRuntimeAttributes>
+                            <userDefinedRuntimeAttribute type="color" keyPath="backgroundColor">
+                                <color key="value" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </userDefinedRuntimeAttribute>
+                        </userDefinedRuntimeAttributes>
+                        <connections>
+                            <outlet property="dataSource" destination="7X4-vu-Kp5" id="PfH-rJ-mcf"/>
+                            <outlet property="delegate" destination="7X4-vu-Kp5" id="noM-Zj-99X"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Evently" id="R3V-Ea-7bo">
+                        <barButtonItem key="backBarButtonItem" title="Back" id="hL1-pV-Ahh">
+                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        </barButtonItem>
+                        <barButtonItem key="leftBarButtonItem" image="person" catalog="system" style="done" id="ugN-kV-GXh">
+                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <connections>
+                                <segue destination="WKL-OZ-cQY" kind="show" id="EC4-72-j0q"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" image="plus" catalog="system" style="done" id="UFN-SR-ya0">
+                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        </barButtonItem>
+                    </navigationItem>
+                    <nil key="simulatedBottomBarMetrics"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="K7b-uE-FZg" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4686.9565217391309" y="1376.7857142857142"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="dIH-pg-8Ax">
+            <objects>
+                <navigationController storyboardIdentifier="FriendEntryPoint" automaticallyAdjustsScrollViewInsets="NO" id="oDx-hc-1W4" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" barStyle="black" translucent="NO" id="And-l1-rFf">
+                        <rect key="frame" x="0.0" y="44" width="414" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="7X4-vu-Kp5" kind="relationship" relationship="rootViewController" id="8Hi-Xa-u22"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="NDq-Yb-Tmj" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3776.811594202899" y="1376.7857142857142"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="person" catalog="system" width="64" height="58"/>
+        <image name="plus" catalog="system" width="64" height="56"/>
+        <image name="profile" width="2400" height="3000"/>
+    </resources>
+</document>
