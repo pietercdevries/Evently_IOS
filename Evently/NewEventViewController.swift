@@ -56,16 +56,78 @@ class NewEventViewController: UIViewController {
         EventDescription.addGestureRecognizer(tap)
     }
     
-    @IBAction func save(){
-        guard let image = EventImage.image else { return }
-        AWSS3ManagerEventImages.shared.uploadImage(image: image, imageName: "event2", progress: {[weak self] ( uploadProgress) in
+    @IBAction func save(){        
+        let newEvent = Event.init(eventImage: EventImage.image, evenTitle: EventTitle.text!, eventTime: EventDateTime.text!, eventDate: EventDateTime.text!, eventDescription: EventDescription.text!, eventDistance: "", eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: EventWebsite.text, eventAddress: EventLocation.text!, eventPhoneNumber: EventPhone.text, eventLiked: false, eventAttendingMemebers: Array<Friend>.init(), eventCreator: Profile.init(profileImage: EventImage.image, profileFirstName: "", profileLastName: ""), commentedOn: false, weather: "")
+        
+        var jsonObject = "{"
+        jsonObject += "\"eventImageUrl\":\"https://s3-us-west-2.amazonaws.com/evently-event-images/\","
+        jsonObject += "\"evenTitle\":\"" + newEvent!.evenTitle + "\","
+        jsonObject += "\"eventTime\":\"" + "10:30:00" + "\","
+        jsonObject += "\"eventDate\":\"" + "2019-12-12 00:00:00" + "\","
+        jsonObject += "\"eventDescription\":\"" + newEvent!.eventDescription + "\","
+        jsonObject += "\"eventDistance\":\"0\","
+        jsonObject += "\"eventCategories\":\"x\","
+        jsonObject += "\"eventLikeCounter\":\"0\","
+        jsonObject += "\"eventCommentCounter\":\"0\","
+        jsonObject += "\"eventWebsite\":\"" + newEvent!.eventWebsite! + "\","
+        jsonObject += "\"eventAddress\":\"" + newEvent!.eventAddress + "\","
+        jsonObject += "\"eventPhoneNumber\":\"" + newEvent!.eventPhoneNumber! + "\","
+        jsonObject += "\"eventLiked\":\"0\","
+        jsonObject += "\"commentedOn\":\"0\","
+        jsonObject += "\"eventCreatorProfileId\":\"1\","
+        jsonObject += "\"weather\":\"x\"}"
+        
+        saveEvent(jsonEvent: jsonObject)
+    }
+    
+    func saveEvent(jsonEvent: String){
+        let url = URL(string: "http://100.21.30.207/Evently/api/events/create.php")!
+        var eventImage = UIImage()
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        eventImage = EventImage.image!
+        
+        print(jsonEvent)
+        
+        do
+        {
+            request.httpBody = jsonEvent.data(using: .utf8)
+        }
+
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data,
+                let response = response as? HTTPURLResponse,
+                error == nil else {                                              // check for fundamental networking error
+                print("error", error ?? "Unknown error")
+                return
+            }
+
+            guard (200 ... 299) ~= response.statusCode else {                    // check for http errors
+                print("statusCode should be 2xx, but is \(response.statusCode)")
+                print("response = \(response)")
+                return
+            }
+
+            let responseString = String(data: data, encoding: .utf8)
+            self.saveImageToAws(imageName: "event" + responseString!, image: eventImage)
+        }
+
+        task.resume()
+    }
+    
+    func saveImageToAws(imageName: String, image: UIImage){
+        AWSS3ManagerEventImages.shared.uploadImage(image: image, imageName: imageName, progress: {[weak self] ( uploadProgress) in
             
             guard self != nil else { return }
             
         }) {[weak self] (uploadedFileUrl, error) in
             
             guard self != nil else { return }
-            if (uploadedFileUrl as? String) != nil { 
+            if (uploadedFileUrl as? String) != nil {
                 print("success")
             } else {
                 print("\(String(describing: error?.localizedDescription))")

@@ -352,7 +352,35 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
     
     //MARK: Private Methods
      
+    @objc private func loadEvents()
+    {
+        guard let url = URL(string: "http://100.21.30.207/Evently/api/events/read.php") else {return}
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+        guard let dataResponse = data,
+                  error == nil else {
+                  print(error?.localizedDescription ?? "Response Error")
+                  return }
+            do{
+                
+                if let json = try? JSONSerialization.jsonObject(with: dataResponse, options: []) as? [String : Any],
+                   let items = json["events"] as? [[String : Any]] {
+                         
+                    for item in items {
+                        let item = item["eventAddress"] as! String
+                        print(item)
+                    }
+                    
+                    
+            }
+            }
+        }
+            
+        task.resume()
+    }
+    
     @objc private func loadSampleEvents() {
+        loadEvents();
+        
         _ = UIImage(named: "new_statesman_events")!
         let photo2 = UIImage(named: "Slider_475")!
         _ = UIImage(named: "44027426264_8c21093b54_z")!
