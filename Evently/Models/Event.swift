@@ -13,7 +13,8 @@ import CoreLocation
 class Event
 {
     //MARK: Properties
-    var eventImage: UIImage?
+    var eventId: String
+    var eventImage: UIImage? = nil
     var evenTitle: String
     var eventTime: String
     var eventDate: String
@@ -29,13 +30,13 @@ class Event
     var eventAttendingMemebers: Array<Friend>
     var commentedOn: Bool
     var eventCreator: Profile
-    var weather: String
+    var weather: String?
     
     // Initialize the class
-    init!(eventImage: UIImage?, evenTitle: String, eventTime: String, eventDate: String, eventDescription: String, eventDistance: String?, eventCategories: String, eventLikeCounter: Int, eventCommentCounter: Int, eventWebsite: String?, eventAddress: String, eventPhoneNumber: String?, eventLiked: Bool, eventAttendingMemebers: Array<Friend>, eventCreator: Profile, commentedOn:Bool, weather: String)
+    init!(eventId: String?, evenTitle: String, eventTime: String, eventDate: String, eventDescription: String, eventDistance: String?, eventCategories: String, eventLikeCounter: Int, eventCommentCounter: Int, eventWebsite: String?, eventAddress: String, eventPhoneNumber: String?, eventLiked: Bool, eventAttendingMemebers: Array<Friend>, eventCreator: Profile, commentedOn:Bool, weather: String)
     {
         // Initialize stored properties.
-        self.eventImage = eventImage!
+        self.eventId = (eventId)!
         self.evenTitle = evenTitle
         self.eventTime = eventTime
         self.eventDate = eventDate

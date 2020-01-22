@@ -63,7 +63,6 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
         ScrollView.delegate = self
         
         if let event = event {
-            eventImage.image = event.eventImage
             eventTitle.text = event.evenTitle
             eventTime.text = event.eventTime
             eventAddress.text = event.eventAddress.replacingOccurrences(of: "+", with: " ").replacingOccurrences(of: ",", with: ", ")
@@ -74,6 +73,11 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
             eventDistance.text = event.eventDistance
             eventCreatorImage.image = event.eventCreator.profileImage
             eventCreatorName.text = event.eventCreator.profileFirstName + " " + event.eventCreator.profileLastName
+            eventImage.image = event.eventImage
+            
+            if(event.eventDistance == "N/A"){
+                eventDistance.isHidden = true
+            }
             
             if(event.eventLiked == true){
                 likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .normal)
@@ -123,7 +127,7 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
             displayAddentingFriends(attendingFriends: event.eventAttendingMemebers)
         }
         
-        setWeatherIcon(weather: event.weather)
+        setWeatherIcon(weather: event.weather!)
     }
     
     func setWeatherIcon(weather: String){
@@ -140,7 +144,7 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
             case "PartiallyCouldy":
                 WeatherIcon.setImage(UIImage(systemName: "cloud.sun"), for: .normal)
         default:
-            WeatherIcon.setImage(UIImage(systemName: "questionmark.circle"), for: .normal)
+            WeatherIcon.isHidden = true
         }
     }
     

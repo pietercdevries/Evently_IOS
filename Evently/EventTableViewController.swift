@@ -15,16 +15,20 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
      
     var events = [Event]()
     var locationManager: CLLocationManager!
+    var imageCache = NSCache<AnyObject, AnyObject>()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action:  #selector(loadSampleEvents), for: .valueChanged)
+        refreshControl.addTarget(self, action:  #selector(loadEvents), for: .valueChanged)
+        let attributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        let attributedTitle = NSAttributedString(string: "Pull down to refresh.", attributes: attributes)
+        refreshControl.attributedTitle = attributedTitle
         self.refreshControl = refreshControl
         
         // Load the sample data.
-        loadSampleEvents()
+        loadEvents();
         
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -78,11 +82,12 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
             fatalError("The dequeued cell is not an instance of EventTableViewCell.")
         }
         
+        cell.tag = indexPath.row
+        
         // Fetches the appropriate events for the data source layout.
         let event = events[indexPath.row]
         
         cell.event = event
-        cell.eventImage.image = event.eventImage
         cell.evenTitle.text = event.evenTitle
         cell.eventTime.text = event.eventTime
         cell.eventDate.text = event.eventDate
@@ -93,6 +98,52 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         cell.commentButton.sizeToFit()
         cell.eventCreatorImage.image = event.eventCreator.profileImage
         cell.eventCreatorName.text = event.eventCreator.profileFirstName + " " + event.eventCreator.profileLastName
+        cell.Spinner.isHidden = false
+        cell.Spinner.startAnimating()
+        
+        let urlString = "https://s3-us-west-2.amazonaws.com/evently-event-images/event" + event.eventId + ".jpeg"
+        var imageUrlString :String?
+        
+        imageUrlString = urlString
+        let request = URLRequest(url: URL(string:urlString)!)
+
+        cell.eventImage.image = nil
+        
+        //imageCache exist,and use it directly
+        if let imageFromCache = imageCache.object(forKey: urlString as AnyObject) as? UIImage {
+            if(cell.tag == indexPath.row) {
+                cell.eventImage.image = imageFromCache
+                cell.Spinner.isHidden = true
+                event.eventImage = cell.eventImage.image
+            }
+        }
+        
+        //imageCache doesn't exist,then download the image and save it
+        URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
+
+            guard let data = data, error == nil else {
+                print(error?.localizedDescription as Any)
+                return
+            }
+
+            DispatchQueue.main.async() {
+
+                if(cell.tag == indexPath.row) {
+                    let imageToCache = UIImage(data: data)
+
+                    self.imageCache.setObject(imageToCache!, forKey: urlString as String as AnyObject )
+
+                    if imageUrlString == urlString
+                    {
+                        cell.eventImage.image = imageToCache
+                    }
+                    
+                    cell.Spinner.isHidden = true
+                    event.eventImage = cell.eventImage.image
+                }
+            }
+
+        }).resume()
         
         cell.selectionStyle = .none
         
@@ -142,7 +193,7 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         }
         else
         {
-            cell.distance.text = " N/A "
+            cell.distance.isHidden = true
         }
         
         // Make it so when friends are clicked it opens them list of friends.
@@ -187,7 +238,7 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         share.data = String(indexPath.row)
         
         displayAddentingFriends(attendingFriends: event.eventAttendingMemebers, cell: cell)
-        setWeatherIcon(cell: cell, weather: event.weather)
+        setWeatherIcon(cell: cell, weather: event.weather!)
         
         return cell
     }
@@ -206,7 +257,7 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
             case "PartiallyCouldy":
                 cell.WeatherIcon.setImage(UIImage(systemName: "cloud.sun"), for: .normal)
         default:
-            cell.WeatherIcon.setImage(UIImage(systemName: "questionmark.circle"), for: .normal)
+            cell.WeatherIcon.isHidden = true
         }
     }
     
@@ -354,6 +405,9 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
      
     @objc private func loadEvents()
     {
+        events = [];
+        imageCache = NSCache<AnyObject, AnyObject>()
+        
         guard let url = URL(string: "http://100.21.30.207/Evently/api/events/read.php") else {return}
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
         guard let dataResponse = data,
@@ -362,139 +416,205 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                   return }
             do{
                 
-                if let json = try? JSONSerialization.jsonObject(with: dataResponse, options: []) as? [String : Any],
+                if let json = try? JSONSerialization.jsonObject(with: dataResponse, options: [.allowFragments]) as? [String : Any],
                    let items = json["events"] as? [[String : Any]] {
-                         
+                         //print(items)
                     for item in items {
-                        let item = item["eventAddress"] as! String
-                        print(item)
+                        let evenTitle = item["evenTitle"] as! String
+                        var eventTime = item["eventTime"] as! String
+                        var eventDate = item["eventDate"] as! String
+                        let eventDescription = item["eventDescription"] as! String
+                        let eventDistance = item["eventDistance"] as! String
+                        var eventAddress = item["eventAddress"] as! String
+                        let eventPhoneNumber = item["eventPhoneNumber"] as! String
+                        let weather = item["weather"] as! String
+                        let eventId = item["eventId"] as! String
+                        
+                        let eventCreator = item["eventCreator"] as! [String : Any]
+                        
+                        let profile1 = UIImage(named: "profile1")!
+                        let profileFirstName = eventCreator["profileFirstName"] as? String
+                        let profileLastName = eventCreator["profileLastName"] as? String
+                        
+                        let creator = Profile.init(profileImage: profile1, profileFirstName: profileFirstName!, profileLastName: profileLastName!)
+                        
+                        let dateFormatterGet = DateFormatter()
+                        dateFormatterGet.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                        
+                        let dateFormatterPrint = DateFormatter()
+                        dateFormatterPrint.dateFormat = "EEEE, MMM d, yyyy"
+                        
+                        let dateFormatterGetTime = DateFormatter()
+                        dateFormatterGetTime.dateFormat = "HH:mm:ss"
+                       
+                        let dateFormatterPrintTime = DateFormatter()
+                        dateFormatterPrintTime.dateFormat = "h:mm a"
+                        
+                        if let date = dateFormatterGet.date(from: eventDate)
+                        {
+                            eventDate = dateFormatterPrint.string(from: date)
+                        } else
+                        {
+                           print("There was an error decoding the string")
+                        }
+                        
+                        if let date = dateFormatterGetTime.date(from: eventTime)
+                        {
+                            eventTime = dateFormatterPrintTime.string(from: date)
+                        } else
+                        {
+                           print("There was an error decoding the string")
+                        }
+                        
+                        eventAddress = eventAddress.replacingOccurrences(of: " ", with: "+")
+                        
+                        let fiendsAttending1 = [Friend]()
+                
+                        guard let newEvent = Event(eventId: eventId, evenTitle: evenTitle, eventTime: eventTime, eventDate: eventDate, eventDescription: eventDescription, eventDistance: eventDistance, eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: "", eventAddress:eventAddress, eventPhoneNumber: eventPhoneNumber, eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator!, commentedOn: true, weather: weather) else {
+                                fatalError("Unable to instantiate event1")
+                        }
+
+                        self.events += [newEvent]
                     }
-                    
-                    
             }
             }
+            
+            DispatchQueue.main.async {
+                   self.tableView.reloadData()
+                   self.refreshControl?.endRefreshing()
+               }
         }
             
         task.resume()
     }
     
-    @objc private func loadSampleEvents() {
-        loadEvents();
-        
-        _ = UIImage(named: "new_statesman_events")!
-        let photo2 = UIImage(named: "Slider_475")!
-        _ = UIImage(named: "44027426264_8c21093b54_z")!
-        let photo8 = UIImage(named: "photo8")!
-        let photo4 = UIImage(named: "photo4")!
-        let photo5 = UIImage(named: "photo5")!
-        let photo6 = UIImage(named: "photo6")!
-        let photo7 = UIImage(named: "photo7")!
-        
-        let profile1 = UIImage(named: "profile1")!
-        let profile2 = UIImage(named: "profile2")!
-        let profile3 = UIImage(named: "profile3")!
-        let profile4 = UIImage(named: "profile4")!
-        let profile5 = UIImage(named: "profile5")!
-        
-        let friend1 = Friend.init(friendProfileImage: profile1, friendFirstName: "Bob", friendLastName: "Pedilla")
-        let friend2 = Friend.init(friendProfileImage: profile2, friendFirstName: "Sally", friendLastName: "Choate")
-        let friend3 = Friend.init(friendProfileImage: profile3, friendFirstName: "Sandy", friendLastName: "de Vries")
-        let friend4 = Friend.init(friendProfileImage: profile4, friendFirstName: "Greg", friendLastName: "Gotchall")
-        let friend5 = Friend.init(friendProfileImage: profile5, friendFirstName: "Andrew", friendLastName: "Smith")
-        
-        var fiendsAttending1 = [Friend]()
-        fiendsAttending1.append(friend1!)
-        fiendsAttending1.append(friend2!)
-        fiendsAttending1.append(friend3!)
-        fiendsAttending1.append(friend4!)
-        fiendsAttending1.append(friend5!)
-        
-        var fiendsAttending2 = [Friend]()
-        fiendsAttending2.append(friend1!)
-        fiendsAttending2.append(friend3!)
-        fiendsAttending2.append(friend2!)
-        
-        var fiendsAttending3 = [Friend]()
-        fiendsAttending3.append(friend5!)
-        
-        var fiendsAttending4 = [Friend]()
-        fiendsAttending4.append(friend2!)
-        fiendsAttending4.append(friend5!)
-        fiendsAttending4.append(friend3!)
-        
-        let fiendsAttending5 = [Friend]()
-        
-        let creator1 = Profile.init(profileImage: profile1, profileFirstName: "Sally", profileLastName: "Choate")
-        let creator2 = Profile.init(profileImage: profile5, profileFirstName: "Greg", profileLastName: "Gochall")
-        let creator3 = Profile.init(profileImage: profile2, profileFirstName: "Andrew", profileLastName: "Smith")
-        
-        guard let event1 = Event(eventImage: photo8, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 380, eventCommentCounter: 300, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event2 = Event(eventImage: photo4, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator2!, commentedOn: false, weather: "Cloudy") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event3 = Event(eventImage: photo5, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator3!, commentedOn: false, weather: "Rain") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        guard let event4 = Event(eventImage: photo8, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending5, eventCreator: creator3!, commentedOn: true, weather: "Snow") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event5 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator2!, commentedOn: false, weather: "PartiallyCouldy") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event6 = Event(eventImage: photo5, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        guard let event7 = Event(eventImage: photo4, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event8 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Cloudy") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event9 = Event(eventImage: photo8, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending2, eventCreator: creator1!, commentedOn: true, weather: "Snow") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        guard let event10 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending5, eventCreator: creator3!, commentedOn: false, weather: "") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event11 = Event(eventImage: photo4, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending1, eventCreator: creator3!, commentedOn: true, weather: "") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event12 = Event(eventImage: photo6, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator2!, commentedOn: true, weather: "Rain") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        guard let event13 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator2!, commentedOn: false, weather: "Rain") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event14 = Event(eventImage: photo2, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending5, eventCreator: creator1!, commentedOn: true, weather: "PartiallyCouldy") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event15 = Event(eventImage: photo4, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator1!, commentedOn: false, weather: "Sun") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        guard let event16 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator2!, commentedOn: false, weather: "Sun") else {
-                fatalError("Unable to instantiate event1")
-        }
-        guard let event17 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator3!, commentedOn: true, weather: "Snow") else {
-                fatalError("Unable to instantiate event2")
-        }
-        guard let event18 = Event(eventImage: photo7, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator3!, commentedOn: false, weather: "Rain") else {
-                fatalError("Unable to instantiate event3")
-        }
-        
-        events += [event1, event2, event3, event4, event5, event6, event7, event8, event9, event10, event11, event12, event13, event14, event15, event16, event17, event18]
-        
-        tableView.reloadData()
-        refreshControl?.endRefreshing()
-    }
+//    @objc private func loadSampleEvents() {
+//        loadEvents();
+//
+//        _ = UIImage(named: "new_statesman_events")!
+//        let photo2 = UIImage(named: "Slider_475")!
+//        _ = UIImage(named: "44027426264_8c21093b54_z")!
+//        let photo8 = UIImage(named: "photo8")!
+//        let photo4 = UIImage(named: "photo4")!
+//        let photo5 = UIImage(named: "photo5")!
+//        let photo6 = UIImage(named: "photo6")!
+//        let photo7 = UIImage(named: "photo7")!
+//
+//        let profile1 = UIImage(named: "profile1")!
+//        let profile2 = UIImage(named: "profile2")!
+//        let profile3 = UIImage(named: "profile3")!
+//        let profile4 = UIImage(named: "profile4")!
+//        let profile5 = UIImage(named: "profile5")!
+//
+//        let friend1 = Friend.init(friendProfileImage: profile1, friendFirstName: "Bob", friendLastName: "Pedilla")
+//        let friend2 = Friend.init(friendProfileImage: profile2, friendFirstName: "Sally", friendLastName: "Choate")
+//        let friend3 = Friend.init(friendProfileImage: profile3, friendFirstName: "Sandy", friendLastName: "de Vries")
+//        let friend4 = Friend.init(friendProfileImage: profile4, friendFirstName: "Greg", friendLastName: "Gotchall")
+//        let friend5 = Friend.init(friendProfileImage: profile5, friendFirstName: "Andrew", friendLastName: "Smith")
+//
+//        var fiendsAttending1 = [Friend]()
+//        fiendsAttending1.append(friend1!)
+//        fiendsAttending1.append(friend2!)
+//        fiendsAttending1.append(friend3!)
+//        fiendsAttending1.append(friend4!)
+//        fiendsAttending1.append(friend5!)
+//
+//        var fiendsAttending2 = [Friend]()
+//        fiendsAttending2.append(friend1!)
+//        fiendsAttending2.append(friend3!)
+//        fiendsAttending2.append(friend2!)
+//
+//        var fiendsAttending3 = [Friend]()
+//        fiendsAttending3.append(friend5!)
+//
+//        var fiendsAttending4 = [Friend]()
+//        fiendsAttending4.append(friend2!)
+//        fiendsAttending4.append(friend5!)
+//        fiendsAttending4.append(friend3!)
+//
+//        let fiendsAttending5 = [Friend]()
+//
+//        let creator1 = Profile.init(profileImage: profile1, profileFirstName: "Sally", profileLastName: "Choate")
+//        let creator2 = Profile.init(profileImage: profile5, profileFirstName: "Greg", profileLastName: "Gochall")
+//        let creator3 = Profile.init(profileImage: profile2, profileFirstName: "Andrew", profileLastName: "Smith")
+//
+//        guard let event1 = Event(eventImage: photo8, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 380, eventCommentCounter: 300, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event2 = Event(eventImage: photo4, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator2!, commentedOn: false, weather: "Cloudy") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event3 = Event(eventImage: photo5, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator3!, commentedOn: false, weather: "Rain") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        guard let event4 = Event(eventImage: photo8, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending5, eventCreator: creator3!, commentedOn: true, weather: "Snow") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event5 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator2!, commentedOn: false, weather: "PartiallyCouldy") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event6 = Event(eventImage: photo5, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        guard let event7 = Event(eventImage: photo4, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator1!, commentedOn: true, weather: "Sun") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event8 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending1, eventCreator: creator1!, commentedOn: true, weather: "Cloudy") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event9 = Event(eventImage: photo8, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending2, eventCreator: creator1!, commentedOn: true, weather: "Snow") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        guard let event10 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending5, eventCreator: creator3!, commentedOn: false, weather: "") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event11 = Event(eventImage: photo4, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending1, eventCreator: creator3!, commentedOn: true, weather: "") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event12 = Event(eventImage: photo6, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator2!, commentedOn: true, weather: "Rain") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        guard let event13 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator2!, commentedOn: false, weather: "Rain") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event14 = Event(eventImage: photo2, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending5, eventCreator: creator1!, commentedOn: true, weather: "PartiallyCouldy") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event15 = Event(eventImage: photo4, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator1!, commentedOn: false, weather: "Sun") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        guard let event16 = Event(eventImage: photo5, evenTitle: "Business Event", eventTime: "1:00AM", eventDate: "Nov 12, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 38, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "321,NE+Sixth+St,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator2!, commentedOn: false, weather: "Sun") else {
+//                fatalError("Unable to instantiate event1")
+//        }
+//        guard let event17 = Event(eventImage: photo6, evenTitle: "Facebook Event", eventTime: "7:30AM", eventDate: "Apr 7, 2020", eventDescription: "This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 12, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "405,NE+Baker+Dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979", eventLiked: true, eventAttendingMemebers: fiendsAttending2, eventCreator: creator3!, commentedOn: true, weather: "Snow") else {
+//                fatalError("Unable to instantiate event2")
+//        }
+//        guard let event18 = Event(eventImage: photo7, evenTitle: "New App Event", eventTime: "8:00AM", eventDate: "Jan 09, 2020", eventDescription: "his event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.This event is for giving product owners to discuss fun times.", eventDistance: " N/A ", eventCategories: "Technology, Business, Indoor", eventLikeCounter: 8, eventCommentCounter: 3, eventWebsite: "https://google.com", eventAddress: "2933,Golden+Aspen+dr.,Grants+Pass,OR", eventPhoneNumber: "(541)408-4979" , eventLiked: false, eventAttendingMemebers: fiendsAttending3, eventCreator: creator3!, commentedOn: false, weather: "Rain") else {
+//                fatalError("Unable to instantiate event3")
+//        }
+//
+//        events += [event1, event2, event3, event4, event5, event6, event7, event8, event9, event10, event11, event12, event13, event14, event15, event16, event17, event18]
+//
+//        tableView.reloadData()
+//        refreshControl?.endRefreshing()
+//    }
 }
 
 class MyTapGesture: UITapGestureRecognizer {
     var data = String()
+}
+
+extension UIImage
+{
+    convenience init?(withContentsOfUrl url: URL) throws {
+        let imageData = try Data(contentsOf: url)
+    
+        self.init(data: imageData)
+    }
+
 }

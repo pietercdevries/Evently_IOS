@@ -19,6 +19,12 @@ class NewEventViewController: UIViewController {
     @IBOutlet weak var EventDescription: UILabel!
     @IBOutlet weak var ScrollView: UIScrollView!
     
+    let messageFrame = UIView()
+    var activityIndicator = UIActivityIndicatorView()
+    var strLabel = UILabel()
+
+    let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+    
     var imagePicker: ImagePicker!
     var resultAddress: String!
 
@@ -57,13 +63,38 @@ class NewEventViewController: UIViewController {
     }
     
     @IBAction func save(){        
-        let newEvent = Event.init(eventImage: EventImage.image, evenTitle: EventTitle.text!, eventTime: EventDateTime.text!, eventDate: EventDateTime.text!, eventDescription: EventDescription.text!, eventDistance: "", eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: EventWebsite.text, eventAddress: EventLocation.text!, eventPhoneNumber: EventPhone.text, eventLiked: false, eventAttendingMemebers: Array<Friend>.init(), eventCreator: Profile.init(profileImage: EventImage.image, profileFirstName: "", profileLastName: ""), commentedOn: false, weather: "")
+        let newEvent = Event.init(eventId: "0", evenTitle: EventTitle.text!, eventTime: EventDateTime.text!, eventDate: EventDateTime.text!, eventDescription: EventDescription.text!, eventDistance: "", eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: EventWebsite.text, eventAddress: EventLocation.text!, eventPhoneNumber: EventPhone.text, eventLiked: false, eventAttendingMemebers: Array<Friend>.init(), eventCreator: Profile.init(profileImage: EventImage.image, profileFirstName: "", profileLastName: ""), commentedOn: false, weather: "")
+        
+        let dateFormatterGet = DateFormatter()
+        dateFormatterGet.dateFormat = "E, MMM d yyyy h:mm a"
+        
+        let dateFormatterPrint = DateFormatter()
+        dateFormatterPrint.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        
+        let dateFormatterPrintTime = DateFormatter()
+        dateFormatterPrintTime.dateFormat = "HH:mm:ss"
         
         var jsonObject = "{"
         jsonObject += "\"eventImageUrl\":\"https://s3-us-west-2.amazonaws.com/evently-event-images/\","
         jsonObject += "\"evenTitle\":\"" + newEvent!.evenTitle + "\","
-        jsonObject += "\"eventTime\":\"" + "10:30:00" + "\","
-        jsonObject += "\"eventDate\":\"" + "2019-12-12 00:00:00" + "\","
+        
+        
+        if let date = dateFormatterGet.date(from: EventDateTime.text!)
+        {
+            jsonObject += "\"eventTime\":\"" + dateFormatterPrintTime.string(from: date) + "\","
+        } else
+        {
+            print("There was an error decoding the string")
+        }
+        
+        if let date = dateFormatterGet.date(from: EventDateTime.text!)
+        {
+            jsonObject += "\"eventDate\":\"" + dateFormatterPrint.string(from: date) + "\","
+        } else
+        {
+            print("There was an error decoding the string")
+        }
+        
         jsonObject += "\"eventDescription\":\"" + newEvent!.eventDescription + "\","
         jsonObject += "\"eventDistance\":\"0\","
         jsonObject += "\"eventCategories\":\"x\","
@@ -81,14 +112,14 @@ class NewEventViewController: UIViewController {
     }
     
     func saveEvent(jsonEvent: String){
+        activityIndicator("Saving Event")
+        
         let url = URL(string: "http://100.21.30.207/Evently/api/events/create.php")!
         var eventImage = UIImage()
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
         eventImage = EventImage.image!
-        
-        print(jsonEvent)
         
         do
         {
@@ -97,7 +128,9 @@ class NewEventViewController: UIViewController {
 
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
-
+        
+        let height = Double(eventImage.size.height)
+        
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data,
                 let response = response as? HTTPURLResponse,
@@ -113,11 +146,36 @@ class NewEventViewController: UIViewController {
             }
 
             let responseString = String(data: data, encoding: .utf8)
-            self.saveImageToAws(imageName: "event" + responseString!, image: eventImage)
+            let eventImageScaled = self.resizeImage(image: eventImage, newHeight: CGFloat(height)).jpegData(compressionQuality: 0.2)
+            self.saveImageToAws(imageName: "event" + responseString!, image: UIImage(data: eventImageScaled!)!)
         }
 
         task.resume()
     }
+    
+    func activityIndicator(_ title: String) {
+
+           strLabel.removeFromSuperview()
+           activityIndicator.removeFromSuperview()
+           effectView.removeFromSuperview()
+
+           strLabel = UILabel(frame: CGRect(x: 50, y: 0, width: 160, height: 46))
+           strLabel.text = title
+           strLabel.font = .systemFont(ofSize: 14, weight: .medium)
+           strLabel.textColor = UIColor(white: 0.9, alpha: 0.7)
+
+           effectView.frame = CGRect(x: view.frame.midX - strLabel.frame.width/2, y: view.frame.midY - strLabel.frame.height/2 , width: 160, height: 46)
+           effectView.layer.cornerRadius = 15
+           effectView.layer.masksToBounds = true
+
+           activityIndicator = UIActivityIndicatorView(style: .white)
+           activityIndicator.frame = CGRect(x: 0, y: 0, width: 46, height: 46)
+           activityIndicator.startAnimating()
+
+           effectView.contentView.addSubview(activityIndicator)
+           effectView.contentView.addSubview(strLabel)
+           view.addSubview(effectView)
+       }
     
     func saveImageToAws(imageName: String, image: UIImage){
         AWSS3ManagerEventImages.shared.uploadImage(image: image, imageName: imageName, progress: {[weak self] ( uploadProgress) in
@@ -129,10 +187,24 @@ class NewEventViewController: UIViewController {
             guard self != nil else { return }
             if (uploadedFileUrl as? String) != nil {
                 print("success")
+                DispatchQueue.main.async {
+                    self!.effectView.removeFromSuperview()
+                }
             } else {
                 print("\(String(describing: error?.localizedDescription))")
             }
         }
+    }
+    
+    func resizeImage(image: UIImage, newHeight: CGFloat) -> UIImage {
+        let scale = newHeight / image.size.height
+        let newWidth = image.size.width * scale
+        UIGraphicsBeginImageContext(CGSize(width: newWidth, height: newHeight))
+        image.draw(in: CGRect(x: 0, y: 0, width: newWidth, height: newHeight))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage!
     }
     
     @objc func editDescription(sender:UITapGestureRecognizer) {

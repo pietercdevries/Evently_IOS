@@ -25,8 +25,9 @@
                                     <rect key="frame" x="0.0" y="0.0" width="414" height="426"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <imageView clipsSubviews="YES" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="44027426264_8c21093b54_z" translatesAutoresizingMaskIntoConstraints="NO" id="4nQ-Ti-8re">
+                                        <imageView clipsSubviews="YES" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="4nQ-Ti-8re">
                                             <rect key="frame" x="10" y="11" width="394" height="175"/>
+                                            <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </imageView>
                                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="NDu-BQ-FG9">
                                             <rect key="frame" x="10" y="184" width="394" height="242"/>
@@ -320,16 +321,26 @@
                                                 <userDefinedRuntimeAttribute type="string" keyPath="layer.cornerRadius" value="5"/>
                                             </userDefinedRuntimeAttributes>
                                         </label>
+                                        <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="hNl-AJ-aWr">
+                                            <rect key="frame" x="188" y="79" width="38" height="39"/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="39" id="bPO-nh-bmo"/>
+                                                <constraint firstAttribute="width" constant="38" id="via-Ey-NJJ"/>
+                                            </constraints>
+                                        </activityIndicatorView>
                                     </subviews>
                                     <constraints>
                                         <constraint firstAttribute="bottomMargin" secondItem="NDu-BQ-FG9" secondAttribute="bottom" constant="-11" id="6Zx-JP-anN"/>
                                         <constraint firstItem="NDu-BQ-FG9" firstAttribute="leading" secondItem="4nQ-Ti-8re" secondAttribute="leading" id="Apd-UU-fmV"/>
                                         <constraint firstItem="ufh-Zl-mca" firstAttribute="leading" relation="lessThanOrEqual" secondItem="nKc-11-zXi" secondAttribute="leadingMargin" constant="301" id="Atd-hU-WGs"/>
+                                        <constraint firstItem="hNl-AJ-aWr" firstAttribute="top" secondItem="nKc-11-zXi" secondAttribute="topMargin" constant="68" id="IFd-hs-H6C"/>
                                         <constraint firstItem="gzF-bj-lyu" firstAttribute="leading" secondItem="ufh-Zl-mca" secondAttribute="trailing" constant="10" id="L23-PI-cdU"/>
                                         <constraint firstItem="NDu-BQ-FG9" firstAttribute="top" secondItem="ufh-Zl-mca" secondAttribute="bottom" constant="8" id="MC8-oU-563"/>
                                         <constraint firstItem="4nQ-Ti-8re" firstAttribute="trailing" secondItem="nKc-11-zXi" secondAttribute="trailingMargin" constant="10" id="OM5-gi-2dd"/>
                                         <constraint firstAttribute="bottomMargin" secondItem="4nQ-Ti-8re" secondAttribute="bottom" constant="229.00000000000011" id="X2g-Gq-Ygm"/>
+                                        <constraint firstItem="NDu-BQ-FG9" firstAttribute="top" secondItem="hNl-AJ-aWr" secondAttribute="bottom" constant="66" id="haV-yY-HE8"/>
                                         <constraint firstItem="NDu-BQ-FG9" firstAttribute="top" secondItem="nKc-11-zXi" secondAttribute="topMargin" constant="173" id="iQK-lZ-53g"/>
+                                        <constraint firstItem="hNl-AJ-aWr" firstAttribute="centerX" secondItem="nKc-11-zXi" secondAttribute="centerX" id="isa-ea-aZs"/>
                                         <constraint firstItem="4nQ-Ti-8re" firstAttribute="top" secondItem="nKc-11-zXi" secondAttribute="topMargin" id="jWH-fH-8Ge"/>
                                         <constraint firstItem="NDu-BQ-FG9" firstAttribute="top" secondItem="gzF-bj-lyu" secondAttribute="bottom" constant="8" id="qoh-kR-luA"/>
                                         <constraint firstItem="NDu-BQ-FG9" firstAttribute="trailing" secondItem="nKc-11-zXi" secondAttribute="trailingMargin" constant="10" id="uCs-Mt-aNj"/>
@@ -340,6 +351,7 @@
                                 <color key="backgroundColor" white="0.92520091614501832" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <connections>
                                     <outlet property="DetailView" destination="NDu-BQ-FG9" id="Cwa-W2-F4y"/>
+                                    <outlet property="Spinner" destination="hNl-AJ-aWr" id="24g-vr-YBH"/>
                                     <outlet property="ViewMoreView" destination="o1W-ig-Rhd" id="GjM-8w-5S6"/>
                                     <outlet property="WeatherIcon" destination="gzF-bj-lyu" id="mjb-VA-3ly"/>
                                     <outlet property="commentButton" destination="iQo-an-KaB" id="dwB-Tz-XSi"/>
@@ -390,9 +402,10 @@
                         <attributedString key="attributedTitle">
                             <fragment content="Refresh">
                                 <attributes>
-                                    <color key="NSBackgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
-                                    <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                                    <font key="NSFont" metaFont="message" size="11"/>
+                                    <color key="NSBackgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                    <color key="NSColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                    <font key="NSFont" metaFont="label" size="11"/>
+                                    <font key="NSOriginalFont" metaFont="system" size="11"/>
                                     <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
                                 </attributes>
                             </fragment>
@@ -1025,7 +1038,7 @@
                         <attributedString key="attributedTitle">
                             <fragment content="Refresh">
                                 <attributes>
-                                    <font key="NSFont" metaFont="message" size="11"/>
+                                    <font key="NSFont" metaFont="label" size="11"/>
                                     <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
                                 </attributes>
                             </fragment>

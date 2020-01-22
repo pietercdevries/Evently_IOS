@@ -34,6 +34,7 @@ class EventTableViewCell: UITableViewCell
     @IBOutlet weak var WeatherIcon: UIButton!
     @IBOutlet weak var shareButton: UIButton!
     @IBOutlet weak var DetailView: UIView!
+    @IBOutlet weak var Spinner: UIActivityIndicatorView!
     
     //MARK: Properties
     var event : Event!
@@ -85,3 +86,4 @@ class EventTableViewCell: UITableViewCell
         // Store Like Pressed
     }
 }
+

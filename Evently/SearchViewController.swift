@@ -71,8 +71,19 @@ class SearchViewController: UIViewController, UISearchBarDelegate, MKLocalSearch
         search.start { (response, error) in
             let coordinate = response?.mapItems[0].placemark.coordinate
             print(String(describing: coordinate))
+           
+            let name = ((response?.mapItems[0].placemark.name)!)
+            let address = ((response?.mapItems[0].placemark.addressDictionary?["Street"])!) as! String
             
-            self.resultAddress = (response?.mapItems[0].placemark.title)!
+            if(name != address)
+            {
+                 self.resultAddress += name + " - "
+            }
+            
+            self.resultAddress += address
+            self.resultAddress += ", " + ((response?.mapItems[0].placemark.locality)!)
+            self.resultAddress += ", " + (response?.mapItems[0].placemark.administrativeArea)!
+            self.resultAddress += ", " + (response?.mapItems[0].placemark.postalCode)!
             
             if let navController = self.navigationController {
                 navController.popViewController(animated: true)
