@@ -30,11 +30,18 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         // Load the sample data.
         loadEvents();
         
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(loadEvents), name: UIApplication.willEnterForegroundNotification, object: nil)
+        
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -238,26 +245,31 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         share.data = String(indexPath.row)
         
         displayAddentingFriends(attendingFriends: event.eventAttendingMemebers, cell: cell)
-        setWeatherIcon(cell: cell, weather: event.weather!)
+        
+        if(cell.tag == indexPath.row) {
+            getWeather(eventDateTime: event.eventDate, event: cell.event, cell: cell)
+        }
         
         return cell
     }
     
     func setWeatherIcon(cell: EventTableViewCell, weather: String){
-        switch weather
+        switch weather.description
         {
-            case "Cloudy":
-                cell.WeatherIcon.setImage(UIImage(systemName: "cloud"), for: .normal)
-            case "Rain":
+            case let str where str.contains("Cloudy"):
+            cell.WeatherIcon.setImage(UIImage(systemName: "cloud"), for: .normal)
+            case let str where str.contains("Rain"):
                 cell.WeatherIcon.setImage(UIImage(systemName: "cloud.rain"), for: .normal)
-            case "Snow":
+            case let str where str.contains("Snow"):
                 cell.WeatherIcon.setImage(UIImage(systemName: "snow"), for: .normal)
-            case "Sun":
+            case let str where str.contains("Sunny"):
                 cell.WeatherIcon.setImage(UIImage(systemName: "sun.max"), for: .normal)
-            case "PartiallyCouldy":
+            case let str where str.contains("Clear"):
+            cell.WeatherIcon.setImage(UIImage(systemName: "sun.max"), for: .normal)
+            case  let str where str.contains("Partly Cloudy"):
                 cell.WeatherIcon.setImage(UIImage(systemName: "cloud.sun"), for: .normal)
         default:
-            cell.WeatherIcon.isHidden = true
+            cell.WeatherIcon.setImage(UIImage(systemName: "questionmark.circle"), for: .normal)
         }
     }
     
@@ -470,10 +482,10 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                         
                         let fiendsAttending1 = [Friend]()
                 
-                        guard let newEvent = Event(eventId: eventId, evenTitle: evenTitle, eventTime: eventTime, eventDate: eventDate, eventDescription: eventDescription, eventDistance: eventDistance, eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: "", eventAddress:eventAddress, eventPhoneNumber: eventPhoneNumber, eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator!, commentedOn: true, weather: weather) else {
+                        guard let newEvent = Event(eventId: eventId, evenTitle: evenTitle, eventTime: eventTime, eventDate: eventDate, eventDescription: eventDescription, eventDistance: eventDistance, eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: "", eventAddress:eventAddress, eventPhoneNumber: eventPhoneNumber, eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator!, commentedOn: true, weather: "") else {
                                 fatalError("Unable to instantiate event1")
                         }
-
+                        
                         self.events += [newEvent]
                     }
             }
@@ -485,6 +497,84 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                }
         }
             
+        task.resume()
+    }
+    
+    func getWeather(eventDateTime: String, event: Event, cell: EventTableViewCell){
+        var lat: Double = 0
+        var lon: Double = 0
+        
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(cell.eventLocation.text!) {
+                     placemarks, error in
+             let placemark = placemarks?.first
+            lat = (placemark?.location?.coordinate.latitude)!
+            lon = (placemark?.location?.coordinate.longitude)!
+        
+            guard let url = URL(string: "https://api.weather.gov/points/" + String(lat) + "," + String(lon)) else {return}
+            let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard let dataResponse = data,
+                      error == nil else {
+                      print(error?.localizedDescription ?? "Response Error")
+                      return }
+                do{
+                    
+                    if let json = try? JSONSerialization.jsonObject(with: dataResponse, options: [.allowFragments]) as? [String : Any],
+                    let items = json["properties"] as? [String : Any] {
+                        DispatchQueue.main.async {
+                            self.getWeatherData(url: items["forecast"] as! String, eventDateTime: eventDateTime, event: event, cell: cell)
+                        }
+                    }
+                }
+            }
+        task.resume()
+        }
+    }
+    
+    func getWeatherData(url: String, eventDateTime: String, event: Event, cell: EventTableViewCell) {
+        guard let url = URL(string: url) else {return}
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+        guard let dataResponse = data,
+                  error == nil else {
+                  print(error?.localizedDescription ?? "Response Error")
+                  return }
+            do{
+                
+                if let json = try? JSONSerialization.jsonObject(with: dataResponse, options: [.allowFragments]) as? [String : Any],
+                let items = json["properties"] as? [String : Any] {
+                    
+                    let periods = items["periods"] as! [[String : Any]]
+                    var forcast: String = ""
+                    
+                    for period in periods{
+                        let dateFormatterGet = DateFormatter()
+                        dateFormatterGet.dateFormat = "yyyy-MM-dd'T'HH:mm:ss-hh:mm"
+                        
+                        let forcastDate = dateFormatterGet.date(from: period["startTime"] as! String)
+                    
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "EEEE, MMM d, yyyy"
+                        
+                        let date = dateFormatter.date(from: eventDateTime)
+                        
+                        let dateFormatterDate = DateFormatter()
+                        dateFormatterDate.dateFormat = "yyyy-MM-dd"
+                        
+                        if (dateFormatterDate.string(from: forcastDate!) == dateFormatterDate.string(from: date!))
+                        {
+                            forcast = period["shortForecast"] as! String
+                        }
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.setWeatherIcon(cell: cell, weather: forcast)
+                        event.weather = forcast
+                        //print(forcast)
+                    }
+                    //print(items["periods"])
+                }
+            }
+        }
         task.resume()
     }
     

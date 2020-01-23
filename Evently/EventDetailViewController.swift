@@ -131,20 +131,22 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
     }
     
     func setWeatherIcon(weather: String){
-        switch weather
+        switch weather.description
         {
-            case "Cloudy":
+            case let str where str.contains("Cloudy"):
                 WeatherIcon.setImage(UIImage(systemName: "cloud"), for: .normal)
-            case "Rain":
+            case let str where str.contains("Rain"):
                 WeatherIcon.setImage(UIImage(systemName: "cloud.rain"), for: .normal)
-            case "Snow":
+            case let str where str.contains("Snow"):
                 WeatherIcon.setImage(UIImage(systemName: "snow"), for: .normal)
-            case "Sun":
+            case let str where str.contains("Sunny"):
                 WeatherIcon.setImage(UIImage(systemName: "sun.max"), for: .normal)
-            case "PartiallyCouldy":
+            case let str where str.contains("Clear"):
+                WeatherIcon.setImage(UIImage(systemName: "sun.max"), for: .normal)
+            case  let str where str.contains("Partly Cloudy"):
                 WeatherIcon.setImage(UIImage(systemName: "cloud.sun"), for: .normal)
         default:
-            WeatherIcon.isHidden = true
+            WeatherIcon.setImage(UIImage(systemName: "questionmark.circle"), for: .normal)
         }
     }
     
