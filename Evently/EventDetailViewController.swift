@@ -86,12 +86,6 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
             {
                 likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
             }
-            
-            if(event.eventDescription.count > 170){
-                ReadMore.isHidden = false
-            }else{
-                ReadMore.isHidden = true
-            }
         }
         
         //Adding event to calendar cals

@@ -74,14 +74,17 @@ class NewEventViewController: UIViewController {
         let dateFormatterPrintTime = DateFormatter()
         dateFormatterPrintTime.dateFormat = "HH:mm:ss"
         
-        var jsonObject = "{"
-        jsonObject += "\"eventImageUrl\":\"https://s3-us-west-2.amazonaws.com/evently-event-images/\","
-        jsonObject += "\"evenTitle\":\"" + newEvent!.evenTitle + "\","
+        var dateTime = ""
+        var time = ""
+        var title = ""
+        var url = ""
         
+        url = "https://s3-us-west-2.amazonaws.com/evently-event-images/"
+        title = newEvent!.evenTitle
         
         if let date = dateFormatterGet.date(from: EventDateTime.text!)
         {
-            jsonObject += "\"eventTime\":\"" + dateFormatterPrintTime.string(from: date) + "\","
+            time = dateFormatterPrintTime.string(from: date)
         } else
         {
             print("There was an error decoding the string")
@@ -89,29 +92,44 @@ class NewEventViewController: UIViewController {
         
         if let date = dateFormatterGet.date(from: EventDateTime.text!)
         {
-            jsonObject += "\"eventDate\":\"" + dateFormatterPrint.string(from: date) + "\","
+            dateTime = dateFormatterPrint.string(from: date)
         } else
         {
             print("There was an error decoding the string")
         }
         
-        jsonObject += "\"eventDescription\":\"" + newEvent!.eventDescription + "\","
-        jsonObject += "\"eventDistance\":\"0\","
-        jsonObject += "\"eventCategories\":\"x\","
-        jsonObject += "\"eventLikeCounter\":\"0\","
-        jsonObject += "\"eventCommentCounter\":\"0\","
-        jsonObject += "\"eventWebsite\":\"" + newEvent!.eventWebsite! + "\","
-        jsonObject += "\"eventAddress\":\"" + newEvent!.eventAddress + "\","
-        jsonObject += "\"eventPhoneNumber\":\"" + newEvent!.eventPhoneNumber! + "\","
-        jsonObject += "\"eventLiked\":\"0\","
-        jsonObject += "\"commentedOn\":\"0\","
-        jsonObject += "\"eventCreatorProfileId\":\"1\","
-        jsonObject += "\"weather\":\"x\"}"
+        let jsonObj:Dictionary<String, Any> = [
+            "eventImageUrl":url,
+            "evenTitle":title,
+            "eventTime":time,
+            "eventDate":dateTime,
+            "eventDescription": newEvent!.eventDescription,
+            "eventDistance":"0",
+            "eventCategories":"x",
+            "eventLikeCounter":"0",
+            "eventCommentCounter":"0",
+            "eventWebsite": newEvent!.eventWebsite!,
+            "eventAddress": newEvent!.eventAddress,
+            "eventPhoneNumber": newEvent!.eventPhoneNumber!,
+            "eventLiked":"0",
+            "commentedOn":"0",
+            "eventCreatorProfileId":"2",
+            "weather":"x"
+        ]
         
-        saveEvent(jsonEvent: jsonObject)
+        if (!JSONSerialization.isValidJSONObject(jsonObj)) {
+           print("is not a valid json object")
+           return
+        }
+        
+        if let postData = try? JSONSerialization.data(withJSONObject: jsonObj, options: JSONSerialization.WritingOptions.prettyPrinted){
+            saveEvent(jsonEvent: postData)
+        }
     }
     
-    func saveEvent(jsonEvent: String){
+    func saveEvent(jsonEvent: Data)
+    {
+        print(String(decoding: jsonEvent, as: UTF8.self))
         activityIndicator("Saving Event")
         
         let url = URL(string: "http://100.21.30.207/Evently/api/events/create.php")!
@@ -123,7 +141,7 @@ class NewEventViewController: UIViewController {
         
         do
         {
-            request.httpBody = jsonEvent.data(using: .utf8)
+            request.httpBody = jsonEvent
         }
 
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
