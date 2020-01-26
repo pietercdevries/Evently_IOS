@@ -30,8 +30,8 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         // Load the sample data.
         loadEvents();
         
-        //let notificationCenter = NotificationCenter.default
-        //notificationCenter.addObserver(self, selector: #selector(loadEvents), name: UIApplication.willEnterForegroundNotification, object: nil)
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(loadEvents), name: UIApplication.willEnterForegroundNotification, object: nil)
         
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -40,6 +40,10 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
     
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tableView.reloadData()
@@ -93,8 +97,28 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         cell.event = event
         cell.evenTitle.text = event.evenTitle
         cell.eventTime.text = event.eventTime
-        cell.eventDate.text = event.eventDate
-        cell.eventLocation.text = event.eventAddress.replacingOccurrences(of: "+", with: " ").replacingOccurrences(of: ",", with: ", ")
+        
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEEE, MMM d, yyyy"
+        
+        let dateFormatterPrint = DateFormatter()
+        dateFormatterPrint.dateFormat = "EEEE, MMM d"
+        
+        let date = dateFormatter.date(from: event.eventDate)
+        let newEventDate = dateFormatterPrint.string(from: date!)
+        
+        cell.eventDate.text = newEventDate
+        
+        if(event.eventPlace != "")
+        {
+            cell.eventLocation.text = event.eventPlace
+        }
+        else
+        {
+            cell.eventLocation.text = event.eventAddress.replacingOccurrences(of: "+", with: " ").replacingOccurrences(of: ",", with: ", ")
+        }
+        
         cell.likeButton.setTitle(" " + String(event.eventLikeCounter), for: .normal)
         cell.commentButton.setTitle(" " + String(event.eventCommentCounter), for: .normal)
         cell.likeButton.sizeToFit()
@@ -179,17 +203,25 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
             
             let currentLocation = CLLocation(latitude: currentLat, longitude: currentLong)
             
-            let geocoder = CLGeocoder()
-            geocoder.geocodeAddressString(event.eventAddress) {
-                   placemarks, error in
-                   let placemark = placemarks?.first
-                   let lat = placemark?.location?.coordinate.latitude
-                   let lon = placemark?.location?.coordinate.longitude
-                   
-                let eventLocation = CLLocation(latitude: lat!, longitude: lon!)
-                
-                let distance: String = String(format: "%.1f", self.getDistance(currentAddress: currentLocation, eventAddress:eventLocation)) + " mi  "
-                
+            if(event.eventAddress != ""){
+                let geocoder = CLGeocoder()
+                    geocoder.geocodeAddressString(event.eventAddress) {
+                           placemarks, error in
+                           let placemark = placemarks?.first
+                           let lat = placemark?.location?.coordinate.latitude
+                           let lon = placemark?.location?.coordinate.longitude
+                           
+                        let eventLocation = CLLocation(latitude: lat!, longitude: lon!)
+                        
+                        let distance: String = String(format: "%.1f", self.getDistance(currentAddress: currentLocation, eventAddress:eventLocation)) + " mi  "
+                        
+                        cell.distance.text = distance
+                        event.eventDistance = distance
+                    }
+            }
+            else
+            {
+                let distance: String = "? mi"
                 cell.distance.text = distance
                 event.eventDistance = distance
             }
@@ -242,8 +274,10 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         
         displayAddentingFriends(attendingFriends: event.eventAttendingMemebers, cell: cell)
         
-        if(cell.tag == indexPath.row) {
-            getWeather(eventDateTime: event.eventDate, event: cell.event, cell: cell)
+        if(event.eventAddress != ""){
+            if(cell.tag == indexPath.row) {
+                getWeather(eventDateTime: event.eventDate, event: cell.event, cell: cell)
+            }
         }
         
         return cell
@@ -430,16 +464,15 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                     for item in items {
                         let evenTitle = item["evenTitle"] as! String
                         var eventTime = item["eventTime"] as! String
+                        let eventEndTime = item["eventEndTime"] as! String
                         var eventDate = item["eventDate"] as! String
                         let eventDescription = item["eventDescription"] as! String
                         let eventDistance = item["eventDistance"] as! String
                         var eventAddress = item["eventAddress"] as! String
+                        let eventPlace = item["eventPlace"] as! String
                         let eventPhoneNumber = item["eventPhoneNumber"] as! String
-                        let weather = item["weather"] as! String
                         let eventId = item["eventId"] as! String
-                        
                         let eventCreator = item["eventCreator"] as! [String : Any]
-                        
                         let profile1 = UIImage(named: "profile1")!
                         let profileFirstName = eventCreator["profileFirstName"] as? String
                         let profileLastName = eventCreator["profileLastName"] as? String
@@ -468,17 +501,39 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                         
                         if let date = dateFormatterGetTime.date(from: eventTime)
                         {
-                            eventTime = dateFormatterPrintTime.string(from: date)
-                        } else
+                            if(eventEndTime == "")
+                            {
+                                 eventTime = dateFormatterPrintTime.string(from: date)
+                            }
+                            else
+                            {
+                                eventTime = dateFormatterPrintTime.string(from: date) + " - " + eventEndTime
+                            }
+                        }
+                        else
                         {
                            print("There was an error decoding the string")
                         }
                         
                         eventAddress = eventAddress.replacingOccurrences(of: " ", with: "+")
-                        
-                        let fiendsAttending1 = [Friend]()
                 
-                        guard let newEvent = Event(eventId: eventId, evenTitle: evenTitle, eventTime: eventTime, eventDate: eventDate, eventDescription: eventDescription, eventDistance: eventDistance, eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: "", eventAddress:eventAddress, eventPhoneNumber: eventPhoneNumber, eventLiked: false, eventAttendingMemebers: fiendsAttending1, eventCreator: creator!, commentedOn: true, weather: "") else {
+                        let profile6 = UIImage(named: "profile6")!
+                                   
+                        var fiendsAttending = [Friend]()
+
+                        if(item["attendingFriends"] != nil){
+                            let friends = item["attendingFriends"] as? [[String : Any]]
+                            
+                            for friend in friends! {
+                                let friendFirstName = friend["friendFirstName"] as! String
+                                let friendLastName = friend["friendLastName"] as! String
+                                
+                                let attendingFriend = Friend.init(friendProfileImage: profile6, friendFirstName: friendFirstName, friendLastName: friendLastName)
+                                fiendsAttending.append(attendingFriend!)
+                            }
+                        }
+        
+                        guard let newEvent = Event(eventId: eventId, evenTitle: evenTitle, eventTime: eventTime, eventEndTime: eventEndTime, eventDate: eventDate, eventDescription: eventDescription, eventDistance: eventDistance, eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: "", eventAddress: eventAddress, eventPlace: eventPlace, eventPhoneNumber: eventPhoneNumber, eventLiked: false, eventAttendingMemebers: fiendsAttending, eventCreator: creator!, commentedOn: true, weather: "") else {
                                 fatalError("Unable to instantiate event1")
                         }
                         
@@ -501,7 +556,7 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         var lon: Double = 0
         
         let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(cell.eventLocation.text!) {
+        geocoder.geocodeAddressString(event.eventAddress) {
                      placemarks, error in
              let placemark = placemarks?.first
             lat = (placemark?.location?.coordinate.latitude)!

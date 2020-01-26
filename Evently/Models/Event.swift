@@ -17,6 +17,7 @@ class Event
     var eventImage: UIImage? = nil
     var evenTitle: String
     var eventTime: String
+    var eventEndTime: String?
     var eventDate: String
     var eventDescription: String
     var eventDistance: String?
@@ -25,6 +26,7 @@ class Event
     var eventCommentCounter: Int
     var eventWebsite: String?
     var eventAddress: String
+    var eventPlace: String?
     var eventPhoneNumber: String?
     var eventLiked: Bool
     var eventAttendingMemebers: Array<Friend>
@@ -33,12 +35,13 @@ class Event
     var weather: String?
     
     // Initialize the class
-    init!(eventId: String?, evenTitle: String, eventTime: String, eventDate: String, eventDescription: String, eventDistance: String?, eventCategories: String, eventLikeCounter: Int, eventCommentCounter: Int, eventWebsite: String?, eventAddress: String, eventPhoneNumber: String?, eventLiked: Bool, eventAttendingMemebers: Array<Friend>, eventCreator: Profile, commentedOn:Bool, weather: String)
+    init!(eventId: String?, evenTitle: String, eventTime: String, eventEndTime: String?, eventDate: String, eventDescription: String, eventDistance: String?, eventCategories: String, eventLikeCounter: Int, eventCommentCounter: Int, eventWebsite: String?, eventAddress: String, eventPlace: String?, eventPhoneNumber: String?, eventLiked: Bool, eventAttendingMemebers: Array<Friend>, eventCreator: Profile, commentedOn: Bool, weather: String)
     {
         // Initialize stored properties.
         self.eventId = (eventId)!
         self.evenTitle = evenTitle
         self.eventTime = eventTime
+        self.eventEndTime = eventEndTime
         self.eventDate = eventDate
         self.eventDescription = eventDescription
         self.eventCategories = eventCategories
@@ -46,6 +49,7 @@ class Event
         self.eventCommentCounter = eventCommentCounter
         self.eventWebsite = eventWebsite
         self.eventAddress = eventAddress
+        self.eventPlace = eventPlace
         self.eventPhoneNumber = eventPhoneNumber
         self.eventDistance = eventDistance
         self.eventLiked = eventLiked

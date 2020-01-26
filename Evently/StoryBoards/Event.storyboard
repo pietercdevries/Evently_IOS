@@ -138,7 +138,7 @@
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Time" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uZF-Vn-7RT">
-                                                            <rect key="frame" x="179.66666666666666" y="42.666666666666686" width="32" height="17"/>
+                                                            <rect key="frame" x="167.66666666666666" y="42.666666666666686" width="32" height="17"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                             <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <nil key="highlightedColor"/>
@@ -167,7 +167,7 @@
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="clock" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="NjW-S2-jJg">
-                                                            <rect key="frame" x="154.66666666666666" y="40" width="20" height="21.333333333333336"/>
+                                                            <rect key="frame" x="142.66666666666666" y="40" width="20" height="21.333333333333336"/>
                                                             <color key="tintColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="20" id="dUz-8q-L1B"/>
@@ -179,7 +179,7 @@
                                                     <constraints>
                                                         <constraint firstItem="WJs-Ql-aze" firstAttribute="top" secondItem="6wo-Em-QFZ" secondAttribute="bottom" constant="12.5" id="5Mi-hb-p8v"/>
                                                         <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="v0w-BS-pNX" secondAttribute="trailing" constant="20" id="84f-0b-L7h"/>
-                                                        <constraint firstItem="NjW-S2-jJg" firstAttribute="leading" secondItem="WJs-Ql-aze" secondAttribute="trailing" constant="32" id="CEr-H3-Oy9"/>
+                                                        <constraint firstItem="NjW-S2-jJg" firstAttribute="leading" secondItem="WJs-Ql-aze" secondAttribute="trailing" constant="20" id="CEr-H3-Oy9"/>
                                                         <constraint firstItem="UTB-qv-1yV" firstAttribute="leading" secondItem="o1W-ig-Rhd" secondAttribute="leading" constant="19" id="IcP-9w-Ue2"/>
                                                         <constraint firstAttribute="height" constant="92" id="IrJ-VA-9OO"/>
                                                         <constraint firstItem="uZF-Vn-7RT" firstAttribute="top" secondItem="6wo-Em-QFZ" secondAttribute="bottom" constant="12.5" id="JE0-Sk-hRq"/>
@@ -307,7 +307,7 @@
                                                 <userDefinedRuntimeAttribute type="string" keyPath="layer.cornerRadius" value="5"/>
                                             </userDefinedRuntimeAttributes>
                                         </button>
-                                        <label opaque="NO" userInteractionEnabled="NO" alpha="0.75" contentMode="right" horizontalHuggingPriority="251" verticalHuggingPriority="251" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="2.1M" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="ufh-Zl-mca">
+                                        <label opaque="NO" userInteractionEnabled="NO" alpha="0.75" contentMode="right" horizontalHuggingPriority="251" verticalHuggingPriority="251" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="? mi" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="ufh-Zl-mca">
                                             <rect key="frame" x="321" y="151" width="33" height="25"/>
                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <constraints>
@@ -409,7 +409,7 @@
                                 <attributes>
                                     <color key="NSBackgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="NSColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
-                                    <font key="NSFont" metaFont="label" size="11"/>
+                                    <font key="NSFont" metaFont="controlContent" size="11"/>
                                     <font key="NSOriginalFont" metaFont="system" size="11"/>
                                     <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
                                 </attributes>
@@ -817,8 +817,8 @@
                                                     <action selector="attendAction" destination="aXT-GW-lJZ" eventType="touchUpInside" id="rcB-pv-dlA"/>
                                                 </connections>
                                             </button>
-                                            <label opaque="NO" userInteractionEnabled="NO" alpha="0.75" contentMode="right" horizontalHuggingPriority="251" verticalHuggingPriority="251" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="2.1M" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="0wf-Be-uHc">
-                                                <rect key="frame" x="327.66666666666669" y="255" width="30.333333333333314" height="25"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" alpha="0.75" contentMode="right" horizontalHuggingPriority="251" verticalHuggingPriority="251" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="? mi" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="0wf-Be-uHc">
+                                                <rect key="frame" x="329" y="255" width="29" height="25"/>
                                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                 <constraints>
                                                     <constraint firstAttribute="height" constant="25" id="1Yb-7Y-LyE"/>
@@ -1049,7 +1049,7 @@
                         <attributedString key="attributedTitle">
                             <fragment content="Refresh">
                                 <attributes>
-                                    <font key="NSFont" metaFont="label" size="11"/>
+                                    <font key="NSFont" metaFont="controlContent" size="11"/>
                                     <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
                                 </attributes>
                             </fragment>

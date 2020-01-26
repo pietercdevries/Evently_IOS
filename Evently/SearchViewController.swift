@@ -14,6 +14,7 @@ class SearchViewController: UIViewController, UISearchBarDelegate, MKLocalSearch
     var searchCompleter = MKLocalSearchCompleter()
     var searchResults = [MKLocalSearchCompletion]()
     var resultAddress: String = ""
+    var eventPlace: String = ""
     
     @IBOutlet weak var searchResultsTableView: UITableView!
     @IBOutlet weak var SearchBar: UISearchBar!
@@ -73,17 +74,9 @@ class SearchViewController: UIViewController, UISearchBarDelegate, MKLocalSearch
             print(String(describing: coordinate))
            
             let name = ((response?.mapItems[0].placemark.name)!)
-            let address = ((response?.mapItems[0].placemark.addressDictionary?["Street"])!) as! String
+            self.eventPlace = name
             
-            if(name != address)
-            {
-                 self.resultAddress += name + " - "
-            }
-            
-            self.resultAddress += address
-            self.resultAddress += ", " + ((response?.mapItems[0].placemark.locality)!)
-            self.resultAddress += ", " + (response?.mapItems[0].placemark.administrativeArea)!
-            self.resultAddress += ", " + (response?.mapItems[0].placemark.postalCode)!
+            self.resultAddress = (response?.mapItems[0].placemark.title)!
             
             if let navController = self.navigationController {
                 navController.popViewController(animated: true)
@@ -95,6 +88,7 @@ class SearchViewController: UIViewController, UISearchBarDelegate, MKLocalSearch
 extension SearchViewController {
     func navigationController(_ navigationController:
         UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        (viewController as? NewEventViewController)?.resultAddress = self.resultAddress // Here you pass the to your original view controller
+        (viewController as? NewEventViewController)?.resultAddress = self.resultAddress
+        (viewController as? NewEventViewController)?.eventPlace = self.eventPlace
     }
 }

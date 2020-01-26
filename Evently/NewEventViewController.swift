@@ -18,6 +18,9 @@ class NewEventViewController: UIViewController {
     @IBOutlet weak var EventPhone: UITextField!
     @IBOutlet weak var EventDescription: UILabel!
     @IBOutlet weak var ScrollView: UIScrollView!
+    @IBOutlet weak var SaveButton: UIBarButtonItem!
+    
+    var eventPlace: String = ""
     
     let messageFrame = UIView()
     var activityIndicator = UIActivityIndicatorView()
@@ -31,7 +34,6 @@ class NewEventViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        
         EventTitle.underlined(color: UIColor.white)
         EventDateTime.underlined(color: UIColor.white)
         EventLocation.underlined(color: UIColor.white)
@@ -63,7 +65,7 @@ class NewEventViewController: UIViewController {
     }
     
     @IBAction func save(){        
-        let newEvent = Event.init(eventId: "0", evenTitle: EventTitle.text!, eventTime: EventDateTime.text!, eventDate: EventDateTime.text!, eventDescription: EventDescription.text!, eventDistance: "", eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: EventWebsite.text, eventAddress: EventLocation.text!, eventPhoneNumber: EventPhone.text, eventLiked: false, eventAttendingMemebers: Array<Friend>.init(), eventCreator: Profile.init(profileImage: EventImage.image, profileFirstName: "", profileLastName: ""), commentedOn: false, weather: "")
+        let newEvent = Event.init(eventId: "0", evenTitle: EventTitle.text!, eventTime: EventDateTime.text!, eventEndTime: "", eventDate: EventDateTime.text!, eventDescription: EventDescription.text!, eventDistance: "", eventCategories: "", eventLikeCounter: 0, eventCommentCounter: 0, eventWebsite: EventWebsite.text, eventAddress: EventLocation.text!, eventPlace: eventPlace, eventPhoneNumber: EventPhone.text, eventLiked: false, eventAttendingMemebers: Array<Friend>.init(), eventCreator: Profile.init(profileImage: EventImage.image, profileFirstName: "", profileLastName: ""), commentedOn: false, weather: "")
         
         let dateFormatterGet = DateFormatter()
         dateFormatterGet.dateFormat = "E, MMM d yyyy h:mm a"
@@ -74,8 +76,12 @@ class NewEventViewController: UIViewController {
         let dateFormatterPrintTime = DateFormatter()
         dateFormatterPrintTime.dateFormat = "HH:mm:ss"
         
+        let dateFormatterPrintEndTime = DateFormatter()
+        dateFormatterPrintEndTime.dateFormat = "HH:mm:ss"
+        
         var dateTime = ""
         var time = ""
+        let endTime = ""
         var title = ""
         var url = ""
         
@@ -85,6 +91,15 @@ class NewEventViewController: UIViewController {
         if let date = dateFormatterGet.date(from: EventDateTime.text!)
         {
             time = dateFormatterPrintTime.string(from: date)
+        } else
+        {
+            print("There was an error decoding the string")
+        }
+        
+        // Change Input
+        if let date = dateFormatterGet.date(from: EventDateTime.text!)
+        {
+            time = dateFormatterPrintEndTime.string(from: date)
         } else
         {
             print("There was an error decoding the string")
@@ -102,6 +117,7 @@ class NewEventViewController: UIViewController {
             "eventImageUrl":url,
             "evenTitle":title,
             "eventTime":time,
+            "eventEndTime":endTime,
             "eventDate":dateTime,
             "eventDescription": newEvent!.eventDescription,
             "eventDistance":"0",
@@ -110,6 +126,7 @@ class NewEventViewController: UIViewController {
             "eventCommentCounter":"0",
             "eventWebsite": newEvent!.eventWebsite!,
             "eventAddress": newEvent!.eventAddress,
+            "eventPlace": newEvent!.eventPlace!,
             "eventPhoneNumber": newEvent!.eventPhoneNumber!,
             "eventLiked":"0",
             "commentedOn":"0",
@@ -171,29 +188,30 @@ class NewEventViewController: UIViewController {
         task.resume()
     }
     
-    func activityIndicator(_ title: String) {
+    func activityIndicator(_ title: String)
+    {
+        strLabel.removeFromSuperview()
+        activityIndicator.removeFromSuperview()
+        effectView.removeFromSuperview()
 
-           strLabel.removeFromSuperview()
-           activityIndicator.removeFromSuperview()
-           effectView.removeFromSuperview()
+        strLabel = UILabel(frame: CGRect(x: 50, y: 0, width: 160, height: 46))
+        strLabel.text = title
+        strLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        strLabel.textColor = UIColor(white: 0.9, alpha: 0.7)
 
-           strLabel = UILabel(frame: CGRect(x: 50, y: 0, width: 160, height: 46))
-           strLabel.text = title
-           strLabel.font = .systemFont(ofSize: 14, weight: .medium)
-           strLabel.textColor = UIColor(white: 0.9, alpha: 0.7)
+        effectView.frame = CGRect(x: view.frame.midX - strLabel.frame.width/2, y: view.frame.midY - strLabel.frame.height/2 , width: 160, height: 46)
+        effectView.layer.cornerRadius = 15
+        effectView.layer.masksToBounds = true
 
-           effectView.frame = CGRect(x: view.frame.midX - strLabel.frame.width/2, y: view.frame.midY - strLabel.frame.height/2 , width: 160, height: 46)
-           effectView.layer.cornerRadius = 15
-           effectView.layer.masksToBounds = true
+        activityIndicator.style = UIActivityIndicatorView.Style.medium
+        activityIndicator.color = UIColor.white
+        activityIndicator.frame = CGRect(x: 0, y: 0, width: 46, height: 46)
+        activityIndicator.startAnimating()
 
-           activityIndicator = UIActivityIndicatorView(style: .white)
-           activityIndicator.frame = CGRect(x: 0, y: 0, width: 46, height: 46)
-           activityIndicator.startAnimating()
-
-           effectView.contentView.addSubview(activityIndicator)
-           effectView.contentView.addSubview(strLabel)
-           view.addSubview(effectView)
-       }
+        effectView.contentView.addSubview(activityIndicator)
+        effectView.contentView.addSubview(strLabel)
+        view.addSubview(effectView)
+    }
     
     func saveImageToAws(imageName: String, image: UIImage){
         AWSS3ManagerEventImages.shared.uploadImage(image: image, imageName: imageName, progress: {[weak self] ( uploadProgress) in

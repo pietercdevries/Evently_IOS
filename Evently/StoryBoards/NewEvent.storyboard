@@ -276,6 +276,7 @@
                         <outlet property="EventPhone" destination="Tl5-qZ-lmn" id="HK2-Zj-Qaz"/>
                         <outlet property="EventTitle" destination="CVd-Zg-cfn" id="4O5-0y-VLJ"/>
                         <outlet property="EventWebsite" destination="CnB-Fg-Pqk" id="Scr-BV-2Lz"/>
+                        <outlet property="SaveButton" destination="PkY-CY-2Dk" id="Scc-9d-dJf"/>
                         <outlet property="ScrollView" destination="X3X-sJ-DZF" id="njh-ri-opr"/>
                     </connections>
                 </viewController>
