@@ -96,8 +96,15 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
         
         cell.event = event
         cell.evenTitle.text = event.evenTitle
-        cell.eventTime.text = event.eventTime
         
+        if(event.eventEndTime == "")
+        {
+            cell.eventTime.text = event.eventTime
+        }
+        else
+        {
+            cell.eventTime.text = event.eventTime + " - " + event.eventEndTime!
+        }
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEEE, MMM d, yyyy"
@@ -464,7 +471,7 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                     for item in items {
                         let evenTitle = item["evenTitle"] as! String
                         var eventTime = item["eventTime"] as! String
-                        let eventEndTime = item["eventEndTime"] as! String
+                        var eventEndTime = item["eventEndTime"] as? String
                         var eventDate = item["eventDate"] as! String
                         let eventDescription = item["eventDescription"] as! String
                         let eventDistance = item["eventDistance"] as! String
@@ -501,18 +508,22 @@ class EventTableViewController: UITableViewController, CLLocationManagerDelegate
                         
                         if let date = dateFormatterGetTime.date(from: eventTime)
                         {
-                            if(eventEndTime == "")
-                            {
-                                 eventTime = dateFormatterPrintTime.string(from: date)
-                            }
-                            else
-                            {
-                                eventTime = dateFormatterPrintTime.string(from: date) + " - " + eventEndTime
-                            }
+                            eventTime = dateFormatterPrintTime.string(from: date)
                         }
                         else
                         {
                            print("There was an error decoding the string")
+                        }
+                        
+                        if( eventEndTime != nil){
+                            if let date = dateFormatterGetTime.date(from: eventEndTime!)
+                            {
+                                eventEndTime = dateFormatterPrintTime.string(from: date)
+                            }
+                            else
+                            {
+                               print("There was an error decoding the string")
+                            }
                         }
                         
                         eventAddress = eventAddress.replacingOccurrences(of: " ", with: "+")

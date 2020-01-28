@@ -64,7 +64,16 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
         
         if let event = event {
             eventTitle.text = event.evenTitle
-            eventTime.text = event.eventTime
+            
+            if(event.eventEndTime == "")
+            {
+                eventTime.text = event.eventTime
+            }
+            else
+            {
+                eventTime.text = event.eventTime + " - " + event.eventEndTime!
+            }
+            
             eventAddress.text = event.eventAddress.replacingOccurrences(of: "+", with: " ").replacingOccurrences(of: ",", with: ", ")
             eventDescription.text = event.eventDescription
             eventDate.text = event.eventDate
@@ -102,15 +111,15 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
         clockImage.addGestureRecognizer(tap3)
         
         let tap4 = UITapGestureRecognizer(target: self, action: #selector(EventDetailViewController.addToCalendar))
-        clockImage.isUserInteractionEnabled = true
-        clockImage.addGestureRecognizer(tap4)
+        calendarImage.isUserInteractionEnabled = true
+        calendarImage.addGestureRecognizer(tap4)
         
         // Make it so when friends are clicked it opens them list of friends.
         friendOne.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
-         friendTwo.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
-         friendThree.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
-         friendFour.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
-         friendFive.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
+        friendTwo.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
+        friendThree.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
+        friendFour.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
+        friendFive.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
         viewAttendingFriends.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.imageTap)))
         
         eventCreatorImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
@@ -304,23 +313,21 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
         }
     }
     
-    @objc
-    func addToCalendar(sender:UITapGestureRecognizer){
-        if(self.event != nil)
-        {
-            let alert = UIAlertController(title: "Save to calendar?.", message: "Save " + self.event.evenTitle + " to the celndar app?", preferredStyle: .alert)
-            
-            alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { action in
-                let dateTime: String
-                dateTime = self.event.eventDate + "T" + self.event.eventTime
-            
-                self.addEventToCalendar(title: self.event.evenTitle, description: self.event.eventDescription, startDate: self.getDate(dateString: dateTime)!,endDate: self.getDate(dateString: dateTime)!)
-            }))
-                       
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-                       
-            self.present(alert, animated: true)
-        }
+    func combineDateWithTime(date: NSDate, time: NSDate) -> NSDate? {
+        let calendar = NSCalendar.current
+        
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date as Date)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time as Date)
+
+        let mergedComponments = NSDateComponents()
+        mergedComponments.year = dateComponents.year!
+        mergedComponments.month = dateComponents.month!
+        mergedComponments.day = dateComponents.day!
+        mergedComponments.hour = timeComponents.hour!
+        mergedComponments.minute = timeComponents.minute!
+        mergedComponments.second = timeComponents.second!
+    
+        return calendar.date(from:mergedComponments as DateComponents) as NSDate?
     }
     
     func getDate(dateString: String) -> Date? {
@@ -346,27 +353,155 @@ class EventDetailViewController: UIViewController, UITextFieldDelegate, UIScroll
         }
     }
     
-    func addEventToCalendar(title: String, description: String?, startDate: Date, endDate: Date, completion: ((_ success: Bool, _ error: NSError?) -> Void)? = nil) {
-        let eventStore = EKEventStore()
-
-        eventStore.requestAccess(to: .event, completion: { (granted, error) in
-            if (granted) && (error == nil) {
-                let event = EKEvent(eventStore: eventStore)
-                event.title = title
-                event.startDate = startDate
-                event.endDate = endDate
-                event.notes = description
-                event.calendar = eventStore.defaultCalendarForNewEvents
-                do {
-                    try eventStore.save(event, span: .thisEvent)
-                } catch let e as NSError {
-                    completion?(false, e)
-                    return
+    @objc func addToCalendar(sender:UITapGestureRecognizer){
+        if(self.event != nil)
+        {
+            let alert = UIAlertController(title: "Save to calendar?", message: "Save " + self.event.evenTitle + " to the calendar app?", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { action in
+                let date: String = self.event.eventDate
+                let timeStart: String = self.event.eventTime
+                var timeEnd: String = "23:59:59"
+                
+                if(self.event.eventEndTime != nil || self.event.eventEndTime != "00:00:00")
+                {
+                    timeEnd = self.event.eventEndTime!
                 }
-                completion?(true, nil)
-            } else {
-                completion?(false, error as NSError?)
+                 
+                let dateFormatterGet = DateFormatter()
+                dateFormatterGet.dateFormat = "EEEE, MMM d, yyyy"
+                
+                let dateFormatterGetTime = DateFormatter()
+                dateFormatterGetTime.dateFormat = "h:mm a"
+                
+                let startDate = dateFormatterGet.date(from: date)
+                let startTime = dateFormatterGetTime.date(from: timeStart)
+                let endTime = dateFormatterGetTime.date(from: timeEnd)
+                
+                let startingDate = self.combineDateWithTime(date: startDate! as NSDate, time: startTime! as NSDate)
+                let endingDate = self.combineDateWithTime(date: startDate! as NSDate, time: endTime! as NSDate)
+                
+                self.addEventToCalendar(title: self.event.evenTitle, location: self.event.eventAddress.replacingOccurrences(of: "+", with: " ").replacingOccurrences(of: ",", with: ", "), description: self.event.eventDescription, startDate: startingDate! as Date ,endDate: endingDate! as Date)
+            }))
+                       
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                       
+            self.present(alert, animated: true)
+        }
+    }
+    
+    func addEventToCalendar(title: String, location: String, description: String?, startDate: Date, endDate: Date, completion: ((_ success: Bool, _ error: NSError?) -> Void)? = nil)
+    {
+        // Set static variables.
+        let eventStore = EKEventStore()
+        
+        // Check if we have permissions to save to the calendar.
+        eventStore.requestAccess(to: .event, completion: { (granted, error) in
+            // Check if we have permssions to even save to the calendar.
+            if (granted == false) || (error != nil)
+            {
+                // Show alert that we do not have permissions.
+                self.showNoCalendarPermissionsAlert()
+                
+                // Get out we do not have peermissions.
+                return
             }
         })
+        
+        // Set static variables.
+        let predicate = eventStore.predicateForEvents(withStart: startDate, end: endDate, calendars: nil)
+        let existingEvents = eventStore.events(matching: predicate)
+        let formatter = DateFormatter()
+        
+        // Set dynamic varibales.
+        var conflictingEvents = Array<String>()
+        
+        // Check if there are any confliciting events in the calendar.
+        for singleEvent in existingEvents
+        {
+            // Format the dat for the conflicting event
+            formatter.dateFormat = "h:mm a"
+            let conflictingStartDate = formatter.string(from: singleEvent.startDate)
+            
+            // Add the conflicitng event to a list.
+            conflictingEvents.append(singleEvent.title + " @ " + conflictingStartDate)
+        }
+        
+        // Check and see if we have any confliciting events.
+        if (conflictingEvents.count > 0)
+        {
+            // We have found confliciting event so not we need to show an alert to see what the user wants to do.
+            let alert = UIAlertController(title: ("You have one or more conflicting events in your calendar.\n\n" + conflictingEvents.joined(separator:"\n") + "\n\nAre You sure you want to save this event?"), message: nil, preferredStyle: .alert)
+            
+            // Create a button to save the event anyways even though there are confliciting events.
+            alert.addAction(UIAlertAction(title: "Save Anyway", style: .default, handler:
+            {
+                // This will be the ation when the button is clicked.
+                (action) in eventStore.requestAccess(to: .event, completion: { (granted, error) in
+                    
+                    // Check if we have permssions to even save to the calendar.
+                    if (granted) && (error == nil)
+                    {
+                        let event = EKEvent(eventStore: eventStore)
+                        event.title = title
+                        event.startDate = startDate
+                        event.endDate = endDate
+                        event.notes = description
+                        event.location = location
+                        event.calendar = eventStore.defaultCalendarForNewEvents
+                      
+                        do
+                        {
+                            // Save the event.
+                            try eventStore.save(event, span: .thisEvent)
+                        }
+                        catch let e as NSError
+                        {
+                            // There was an error trying to save so we diplay the error message in an alert..
+                            let errorAlert = UIAlertController(title: ("There was an error trying to add the event to your calendar. /n Possible reason: " + e.localizedDescription), message: nil, preferredStyle: .alert)
+                            
+                            // Add a dismiss okay button.
+                            errorAlert.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
+                            self.present(alert, animated: true, completion: nil)
+                            
+                            // We failed so complete the task.
+                            completion?(false, e)
+                            return
+                        }
+                        completion?(true, nil)
+                    }
+                    else
+                    {
+                        // Show alert that we do not have permissions.
+                        self.showNoCalendarPermissionsAlert()
+                        
+                        // We failed so complete the task.
+                        completion?(false, error as NSError?)
+                        
+                        // Get out we do not have peermissions.
+                        return
+                    }
+               })
+           }))
+
+           // Add a cncel button to the alert.
+           alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+           self.present(alert, animated: true, completion: nil)
+        }
+        else
+        {
+            // No conflicts go ahead and save the event without a warning.
+            
+        }
+    }
+    
+    private func showNoCalendarPermissionsAlert() -> Void
+    {
+        // We did no have permission to add this evet to the calendar. Show an alert.
+        let notAutherizedAlert = UIAlertController(title: ("You have declined access for evently to add events in you calendar. To allow this feature please got to settings and turn it back on."), message: nil, preferredStyle: .alert)
+        
+        // Add a dismiss okay button.
+        notAutherizedAlert.addAction(UIAlertAction(title: "Okay", style: .cancel, handler: nil))
+        self.present(notAutherizedAlert, animated: true, completion: nil)
     }
 }
